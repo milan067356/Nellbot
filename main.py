@@ -1,4 +1,5 @@
 import asyncio
+import random
 from aiogram import Bot, Dispatcher, F
 from aiogram.types import Message, CallbackQuery, LabeledPrice, PreCheckoutQuery
 from aiogram.filters import Command
@@ -13,6 +14,7 @@ dp = Dispatcher()
 def main_menu():
     builder = ReplyKeyboardBuilder()
     builder.button(text="⭐ Пожертвовать звездами")
+    builder.button(text="🎰 Крутить слот 🎰")
     builder.button(text="📈 Купить акции на моей бирже 📈")
     builder.button(text="🎁 Мои нфт 🎁")
     builder.button(text="👤 обо мне 👤")
@@ -42,6 +44,21 @@ async def donate(message: Message):
         "Выберите сумму пожертвования:",
         reply_markup=amounts_keyboard()
     )
+
+@dp.message(F.text == "🎰 Крутить слот 🎰")
+async def slot_game(message: Message):
+    # Отправляем официальный анимированный кубик/слот от Telegram (слот-автомат)
+    # Эмодзи "🎰" крутит анимированный слотиков в Telegram
+    msg = await message.answer_dice(emoji="🎰")
+    
+    # value от Telegram для слота идет от 1 до 64. 
+    # Комбинация 777 (три семерки) — это максимальное значение (обычно 64 в API Telegram для слотов)
+    # Давайте сделаем проверку:
+    await asyncio.sleep(2)  дл
+    if msg.dice.value == 64:
+        await message.answer(" джекпот! Выпало 777! 🎉 Вы выиграли 10 звезд!")
+    else:
+        await message.answer("К сожалению, не повезло 😢 Попробуй еще раз!")
 
 @dp.message(F.text == "📈 Купить акции на моей бирже 📈")
 async def stocks(message: Message):
