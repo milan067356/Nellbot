@@ -1,5 +1,4 @@
 import asyncio
-import random
 from aiogram import Bot, Dispatcher, F
 from aiogram.types import Message, CallbackQuery, LabeledPrice, PreCheckoutQuery
 from aiogram.filters import Command
@@ -29,6 +28,14 @@ def amounts_keyboard():
     builder.adjust(3)
     return builder.as_markup()
 
+# Кнопки ставок для игры в слот
+def slot_bets_keyboard():
+    builder = InlineKeyboardBuilder()
+    for bet in [1, 5, 10, 15, 20, 50, 100]:
+        builder.button(text=f"{bet} ⭐", callback_data=f"slotbet_{bet}")
+    builder.adjust(3)
+    return builder.as_markup()
+
 @dp.message(Command("start"))
 async def start(message: Message):
     await message.answer(
@@ -46,16 +53,11 @@ async def donate(message: Message):
     )
 
 @dp.message(F.text == "🎰 Крутить слот 🎰")
-async def slot_game(message: Message):
-    # Отправляем официальный слот-автомат от Telegram
-    msg = await message.answer_dice(emoji="🎰")
-    
-    await asyncio.sleep(2)
-    # Если выпадает 64 (комбинация 777)
-    if msg.dice.value == 64:
-        await message.answer("🎉 ДЖЕКПОТ! Выпало 777! Вы выиграли 10 звезд!")
-    else:
-        await message.answer("😢 Не повезло! Попробуй еще раз!")
+async def slot_game_menu(message: Message):
+    await message.answer(
+        "Выберите вашу ставку в звездах ⭐ для игры в слот:",
+        reply_markup=slot_bets_keyboard()
+    )
 
 @dp.message(F.text == "📈 Купить акции на моей бирже 📈")
 async def stocks(message: Message):
@@ -82,12 +84,11 @@ async def about(message: Message):
 💎 Спасибо, что посмотрел💎"""
     await message.answer(text)
 
-# === Оплата звездами ===
+# === Оплата за обычное пожертвование ===
 
 @dp.callback_query(F.data.startswith("pay_"))
 async def process_payment(callback: CallbackQuery):
     amount = int(callback.data.split("_")[1])
-    
     prices = [LabeledPrice(label=f"Пожертвование {amount} звезд", amount=amount)]
     
     await bot.send_invoice(
@@ -101,14 +102,51 @@ async def process_payment(callback: CallbackQuery):
     )
     await callback.answer()
 
+# === Выставление счета для ставки в слоте ===
+
+@dp.callback_query(F.data.startswith("slotbet_"))
+async def process_slot_bet(callback: CallbackQuery):
+    bet = int(callback.data.split("_")[1])
+    prices = [LabeledPrice(label=f"Ставка в слоте: {bet} звезд", amount=bet)]
+    
+    await bot.send_invoice(
+        chat_id=callback.from_user.id,
+        title="🎰 Ставка в слот",
+        description=f"Оплатите {bet} звезд ⭐ для вращения слота!",
+        payload=f"slotbet_{bet}",
+        provider_token="",
+        currency="XTR",
+        prices=prices,
+    )
+    await callback.answer()
+
 @dp.pre_checkout_query()
 async def pre_checkout(pre_checkout_query: PreCheckoutQuery):
     await bot.answer_pre_checkout_query(pre_checkout_query.id, ok=True)
 
+# === Проведение оплаты и запуск слота ===
+
 @dp.message(F.successful_payment)
 async def successful_payment(message: Message):
+    payload = message.successful_payment.invoice_payload
     amount = message.successful_payment.total_amount
-    await message.answer(f"Спасибо за поддержку на {amount} звезд! ❤️")
+
+    # Если это была обычная пожертвование
+    if payload.startswith("donate_"):
+        await message.answer(f"Спасибо за поддержку на {amount} звезд! ❤️")
+
+    # Если это была ставка в слоте
+    elif payload.startswith("slotbet_"):
+        await message.answer("Оплата прошла успешно! Крутим слот... 🎰")
+        msg = await message.answer_dice(emoji="🎰")
+        
+        await asyncio.sleep(2)  # Ждем окончания анимации
+        
+        # В Telegram значение 64 для эмодзи 🎰 соответствует комбинации 777
+        if msg.dice.value == 64:
+            await message.answer("🎉 ТЫ ВЫИГРАЛ! Напиши в лс @Navi4563 чтоб забрать приз!")
+        else:
+            await message.answer("😢 Не повезло! Попробуй еще раз!")
 
 async def main():
     print("Бот запущен...")
