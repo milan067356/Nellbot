@@ -47,18 +47,15 @@ async def donate(message: Message):
 
 @dp.message(F.text == "🎰 Крутить слот 🎰")
 async def slot_game(message: Message):
-    # Отправляем официальный анимированный кубик/слот от Telegram (слот-автомат)
-    # Эмодзи "🎰" крутит анимированный слотиков в Telegram
+    # Отправляем официальный слот-автомат от Telegram
     msg = await message.answer_dice(emoji="🎰")
     
-    # value от Telegram для слота идет от 1 до 64. 
-    # Комбинация 777 (три семерки) — это максимальное значение (обычно 64 в API Telegram для слотов)
-    # Давайте сделаем проверку:
-    await asyncio.sleep(2)  дл
+    await asyncio.sleep(2)
+    # Если выпадает 64 (комбинация 777)
     if msg.dice.value == 64:
-        await message.answer(" джекпот! Выпало 777! 🎉 Вы выиграли 10 звезд!")
+        await message.answer("🎉 ДЖЕКПОТ! Выпало 777! Вы выиграли 10 звезд!")
     else:
-        await message.answer("К сожалению, не повезло 😢 Попробуй еще раз!")
+        await message.answer("😢 Не повезло! Попробуй еще раз!")
 
 @dp.message(F.text == "📈 Купить акции на моей бирже 📈")
 async def stocks(message: Message):
