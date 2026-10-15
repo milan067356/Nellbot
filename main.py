@@ -9,17 +9,17 @@ TOKEN = "8821471298:AAEkEoJUpbv8Uf9wNXQ5YUFF0s11NPpWAkw"
 bot = Bot(token=TOKEN)
 dp = Dispatcher()
 
-# Головне меню (кнопки знизу)
+# Главное меню (кнопки снизу)
 def main_menu():
     builder = ReplyKeyboardBuilder()
-    builder.button(text="⭐ Пожертвувати зірками")
+    builder.button(text="⭐ Пожертвовать звездами")
     builder.button(text="📈 Купить акции на моей бирже 📈")
     builder.button(text="🎁 Мои нфт 🎁")
     builder.button(text="👤 обо мне 👤")
-    builder.adjust(1)  # кожна кнопка з нового рядка
+    builder.adjust(1)
     return builder.as_markup(resize_keyboard=True)
 
-# Кнопки сум для донату
+# Кнопки сумм для доната
 def amounts_keyboard():
     builder = InlineKeyboardBuilder()
     for amount in [1, 5, 10, 20, 50, 100]:
@@ -30,16 +30,16 @@ def amounts_keyboard():
 @dp.message(Command("start"))
 async def start(message: Message):
     await message.answer(
-        "Привіт! 👋\nОберіть потрібну кнопку:",
+        "💎добро пожаловать в Nell бот💎",
         reply_markup=main_menu()
     )
 
-# === Обробка кнопок ===
+# === Обработка кнопок ===
 
-@dp.message(F.text == "⭐ Пожертвувати зірками")
+@dp.message(F.text == "⭐ Пожертвовать звездами")
 async def donate(message: Message):
     await message.answer(
-        "Оберіть суму пожертви:",
+        "Выберите сумму пожертвования:",
         reply_markup=amounts_keyboard()
     )
 
@@ -68,18 +68,18 @@ async def about(message: Message):
 💎 Спасибо, что посмотрел💎"""
     await message.answer(text)
 
-# === Оплата зірками ===
+# === Оплата звездами ===
 
 @dp.callback_query(F.data.startswith("pay_"))
 async def process_payment(callback: CallbackQuery):
     amount = int(callback.data.split("_")[1])
     
-    prices = [LabeledPrice(label=f"Пожертва {amount} зірок", amount=amount)]
+    prices = [LabeledPrice(label=f"Пожертвование {amount} звезд", amount=amount)]
     
     await bot.send_invoice(
         chat_id=callback.from_user.id,
-        title="Пожертва зірками",
-        description=f"Підтримати бота на {amount} зірок ⭐",
+        title="Пожертвование звездами",
+        description=f"Поддержать бота на {amount} звезд ⭐",
         payload=f"donate_{amount}",
         provider_token="",
         currency="XTR",
@@ -94,10 +94,10 @@ async def pre_checkout(pre_checkout_query: PreCheckoutQuery):
 @dp.message(F.successful_payment)
 async def successful_payment(message: Message):
     amount = message.successful_payment.total_amount
-    await message.answer(f"Дякую за підтримку на {amount} зірок! ❤️")
+    await message.answer(f"Спасибо за поддержку на {amount} звезд! ❤️")
 
 async def main():
-    print("Бот запущений...")
+    print("Бот запущен...")
     await dp.start_polling(bot)
 
 if __name__ == "__main__":
